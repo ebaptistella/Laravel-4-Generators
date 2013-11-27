@@ -41,7 +41,14 @@ class ModelGenerator extends Generator {
             return "'$field' => 'required'";
         }, array_keys($fields));
 
-        return str_replace('{{rules}}', PHP_EOL."\t\t".implode(','.PHP_EOL."\t\t", $rules) . PHP_EOL."\t", $this->template);
+        $friendly_names = array_map(function($field) {
+            return "'$field' => '$field'";
+        }, array_keys($fields));
+        
+        $this->template = str_replace('{{rules}}', PHP_EOL."\t\t".implode(','.PHP_EOL."\t\t", $rules) . PHP_EOL."\t", $this->template);
+        $this->template = str_replace('{{friendly_names}}', PHP_EOL."\t\t".implode(','.PHP_EOL."\t\t", $rules) . PHP_EOL."\t", $this->template);
+            
+        return $this->template;
     }
 
 }

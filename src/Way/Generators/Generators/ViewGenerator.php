@@ -56,8 +56,8 @@ class ViewGenerator extends Generator {
 
         // And finally create the table rows
         list($headings, $fields, $editAndDeleteLinks) = $this->makeTableRows($model);
-        $this->template = str_replace('{{headings}}', implode(PHP_EOL."\t\t\t\t", $headings), $this->template);
-        $this->template = str_replace('{{fields}}', implode(PHP_EOL."\t\t\t\t\t", $fields) . PHP_EOL . $editAndDeleteLinks, $this->template);
+        $this->template = str_replace('{{headings}}', implode(PHP_EOL."\t\t\t\t\t\t\t\t\t\t", $headings), $this->template);
+        $this->template = str_replace('{{fields}}', implode(PHP_EOL."\t\t\t\t\t\t\t\t\t\t\t", $fields) . PHP_EOL . $editAndDeleteLinks, $this->template);
 
         return $this->template;
     }
@@ -75,10 +75,10 @@ class ViewGenerator extends Generator {
         $fields = $this->cache->getFields();
 
         // First, we build the table headings
-        $headings = array_map(function($field) {
-            return '<th>' . ucwords($field) . '</th>';
+        $headings = array_map(function($field) use ($model) {
+            return '<th>{{ Lang::get("messages.form.'.$model.'.'.$field.'") }}</th>';
         }, array_keys($fields));
-
+        
         // And then the rows, themselves
         $fields = array_map(function($field) use ($model) {
             return "<td>{{{ \$$model->$field }}}</td>";
@@ -86,12 +86,14 @@ class ViewGenerator extends Generator {
 
         // Now, we'll add the edit and delete buttons.
         $editAndDelete = <<<EOT
-                    <td>{{ link_to_route('{$models}.edit', 'Edit', array(\${$model}->id), array('class' => 'btn btn-info')) }}</td>
-                    <td>
-                        {{ Form::open(array('method' => 'DELETE', 'route' => array('{$models}.destroy', \${$model}->id))) }}
-                            {{ Form::submit('Delete', array('class' => 'btn btn-danger')) }}
-                        {{ Form::close() }}
-                    </td>
+                                            <td nowrap="nowrap" align="center" width="200">
+                                                {{ Form::open(array('method' => 'DELETE', 'route' => array('admin.{$models}.destroy', \${$model}->id))) }}
+                                                    <div class="btn-group">
+                                                        <a href="{{ URL::to("admin/{$models}/{\${$model}->id}/edit/") }}" class="btn btn-info btn-sm" role="button"><span class="glyphicon glyphicon-edit"></span> {{ Lang::get('messages.templates.grid.edit') }}</a>
+                                                        <button type="submit" class="btn btn-danger btn-sm"><span class="glyphicon glyphicon-trash"></span> {{ Lang::get('messages.templates.grid.delete') }}</button>
+                                                    </div>
+                                                {{ Form::close() }}
+                                            </td>            
 EOT;
 
         return array($headings, $fields, $editAndDelete);
@@ -105,40 +107,44 @@ EOT;
      */
     public function makeFormElements()
     {
+        $model = $this->cache->getModelName();
         $formMethods = array();
 
         foreach($this->cache->getFields() as $name => $type)
         {
             $formalName = ucwords($name);
-
+            
             // TODO: add remaining types
             switch($type)
             {
                 case 'integer':
-                   $element = "{{ Form::input('number', '$name') }}";
+                   $element = "{{ Form::input('number', '$name', Input::old('$name'), array('class' => 'form-control', 'placeholder' => '$formalName', 'id' => '$name')) }}";
                     break;
 
                 case 'text':
-                    $element = "{{ Form::textarea('$name') }}";
+                    $element = "{{ Form::textarea('$name', Input::old('$name'), array('class' => 'form-control', 'placeholder' => '$formalName', 'id' => '$name')) }}";
                     break;
 
                 case 'boolean':
-                    $element = "{{ Form::checkbox('$name') }}";
+                    $element = "{{ Form::checkbox('$name', true, Input::old('$name')) }}";
                     break;
 
                 default:
-                    $element = "{{ Form::text('$name') }}";
+                    $element = "{{ Form::text('$name', Input::old('$name'), array('class' => 'form-control', 'placeholder' => '$formalName', 'id' => '$name')) }}";
                     break;
             }
 
             // Now that we have the correct $element,
             // We can build up the HTML fragment
             $frag = <<<EOT
-        <li>
-            {{ Form::label('$name', '$formalName:') }}
-            $element
-        </li>
-
+            
+            <div class="form-group @if (\$error = \$errors->first('$name')) has-error @endif">
+                {{ Form::label('$name', Lang::get('messages.form.$model.$name').':', array('class' => 'col-lg-2 control-label')) }}
+                <div class="col-lg-3 input-group">
+                    <span class="input-group-addon glyphicon glyphicon-calendar"></span>
+                    $element
+                </div>
+            </div>            
 EOT;
 
             $formMethods[] = $frag;

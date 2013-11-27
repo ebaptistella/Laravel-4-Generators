@@ -21,7 +21,8 @@ class {{className}} extends BaseController {
 	 */
 	public function index()
 	{
-		${{models}} = $this->{{model}}->all();
+		${{model}} = $this->{{model}};
+	    ${{models}} = ${{model}}::paginate(10);
 
 		return View::make('{{models}}.index', compact('{{models}}'));
 	}
@@ -44,16 +45,17 @@ class {{className}} extends BaseController {
 	public function store()
 	{
 		$input = Input::all();
-		$validation = Validator::make($input, {{Model}}::$rules);
+		$validation = Validator::make($input, {{Model}}::$rules)->setAttributeNames({{Model}}::$friendly_names);
 
 		if ($validation->passes())
 		{
-			$this->{{model}}->create($input);
+			$inserted = $this->{{model}}->create($input);
 
-			return Redirect::route('{{models}}.index');
+			//return Redirect::route('admin.{{models}}.index');
+			return Redirect::route('admin.{{models}}.edit', $inserted->id)->with('success', Lang::get('messages.template.insert.success'));
 		}
 
-		return Redirect::route('{{models}}.create')
+		return Redirect::route('admin.{{models}}.create')
 			->withInput()
 			->withErrors($validation)
 			->with('message', 'There were validation errors.');
@@ -84,7 +86,7 @@ class {{className}} extends BaseController {
 
 		if (is_null(${{model}}))
 		{
-			return Redirect::route('{{models}}.index');
+			return Redirect::route('admin.{{models}}.index');
 		}
 
 		return View::make('{{models}}.edit', compact('{{model}}'));
@@ -99,17 +101,17 @@ class {{className}} extends BaseController {
 	public function update($id)
 	{
 		$input = array_except(Input::all(), '_method');
-		$validation = Validator::make($input, {{Model}}::$rules);
+		$validation = Validator::make($input, {{Model}}::$rules)->setAttributeNames({{Model}}::$friendly_names);
 
 		if ($validation->passes())
 		{
 			${{model}} = $this->{{model}}->find($id);
 			${{model}}->update($input);
 
-			return Redirect::route('{{models}}.show', $id);
+			return Redirect::route('admin.{{models}}.edit', $id)->with('success', Lang::get('messages.template.modify.success'));
 		}
 
-		return Redirect::route('{{models}}.edit', $id)
+		return Redirect::route('admin.{{models}}.edit', $id)
 			->withInput()
 			->withErrors($validation)
 			->with('message', 'There were validation errors.');
@@ -123,9 +125,9 @@ class {{className}} extends BaseController {
 	 */
 	public function destroy($id)
 	{
-		$this->{{model}}->find($id)->delete();
+		$this->{{model}}->destroy($id);
 
-		return Redirect::route('{{models}}.index');
+		return Redirect::route('admin.{{models}}.index');
 	}
 
 }

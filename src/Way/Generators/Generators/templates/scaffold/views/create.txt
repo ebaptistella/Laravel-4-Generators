@@ -1,24 +1,71 @@
-@extends('layouts.scaffold')
+@extends('layouts.internal')
 
-@section('main')
+@section('title')
+    {{Models}} 
+@endsection
 
-<h1>Create {{Model}}</h1>
+@section('breadcrumb')
+    <ol class="breadcrumb">
+        <li><a href="{{ URL::to("/admin") }}">Home</a></li>
+        <li><a href="{{ URL::to("/admin/{{models}}") }}">{{Models}}</a></li>
+        <li class="active">{{ Lang::get('messages.template.breadcrumb.new') }}</li>
+    </ol>
+@endsection
 
-{{ Form::open(array('route' => '{{models}}.store')) }}
-	<ul>
-{{formElements}}
-		<li>
-			{{ Form::submit('Submit', array('class' => 'btn btn-info')) }}
-		</li>
-	</ul>
+@section('module.name')
+    {{Models}}
+@endsection
+
+@section('template')
+
+<h1>{{ Lang::get('messages.template.header.create') }} {{Model}}</h1>
+<hr />
+
+{{ Form::open(array('route' => "admin.{{models}}.store", 'files' => true, 'class' => 'form-horizontal', 'role' => 'form')) }}
+	<div class="row">
+		<div class="col-md-10 col-md-offset-1">
+		
+			@if (Session::has('success'))
+			<div class="alert alert-success">
+                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                <span class="alert-link">{{ Session::get('success') }}</span>
+            </div>
+            @endif
+            
+			@if (Session::has('errors'))
+			<div class="alert alert-danger">
+                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                <ul class="alert-link">
+                	{{ implode('', $errors->all('<li class="error">:message</li>')) }}
+				</ul>
+            </div>
+            @endif
+
+			{{formElements}}
+		
+		</div>
+	</div>
+
+	<div class="row">
+    	<hr />
+        <div class="col-md-12 text-center">
+            <button class="btn btn-success" type="submit"><span class="glyphicon glyphicon-check"></span> {{ Lang::get('messages.templates.form.save') }}</button>
+            <button class="btn btn-warning" type="reset"><span class="glyphicon glyphicon-refresh"></span> {{ Lang::get('messages.templates.form.clear') }}</button>
+            <div class="btn-group">
+                <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-plus-sign"></span> {{ Lang::get('messages.templates.form.more') }} <span class="caret"></span></button>
+                <ul class="dropdown-menu text-left" role="menu1">
+                    <li class="disabled"><a href="{{ URL::to("/admin/{{models}}/create") }}"><span class="glyphicon glyphicon-plus"></span> {{ Lang::get('messages.templates.form.new') }}</a></li>
+                    <li class="disabled"><a href="{{ URL::to("/admin/{{models}}/destroy") }}"><span class="glyphicon glyphicon-trash"></span> {{ Lang::get('messages.templates.form.delete') }}</a></li>
+                    <li class="divider">&nbsp;</li>
+                    <li><a href="{{ URL::to("/admin/{{models}}") }}"><span class="glyphicon glyphicon-list"></span> {{ Lang::get('messages.templates.form.list') }}</a></li>
+                </ul>            
+            </div>
+        </div>
+    </div>
+
 {{ Form::close() }}
 
-@if ($errors->any())
-	<ul>
-		{{ implode('', $errors->all('<li class="error">:message</li>')) }}
-	</ul>
-@endif
+{{ Form::open(array('method' => 'DELETE', 'route' => array('admin.{{models}}.destroy', 0))) }}
+{{ Form::close() }}
 
 @stop
-
-
